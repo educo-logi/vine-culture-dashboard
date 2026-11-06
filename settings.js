@@ -137,7 +137,7 @@
       <div class="settings-card"><h2>부서별 인원</h2><p class="small">팀 평균 학습시간과 순위 계산에 사용합니다.</p><div class="settings-grid">${Object.entries(draft.departments).map(([name, count]) => `<label>${esc(name)}<input type="number" min="1" max="999" data-department="${esc(name)}" value="${count}"></label>`).join('')}</div></div>
       <div class="settings-card"><h2>구글시트 연결</h2><p class="small">원본 시트는 읽기 전용입니다. 링크와 gid를 저장한 뒤 연결 상태를 확인할 수 있습니다.</p>${Object.entries(draft.sheets).map(([key, sheet]) => `<div class="settings-sheet"><strong>${esc(sheet.label)}</strong><label>구글시트 URL<input type="url" data-sheet-url="${key}" value="${esc(sheet.url)}"></label><label>탭 gid<input data-sheet-gid="${key}" value="${esc(sheet.gid)}"></label><button type="button" data-check-sheet="${key}">읽기 확인</button><a class="settings-sheet-link" data-sheet-link="${key}" href="${esc(sheetPageFrom(sheet.url, sheet.gid))}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a><span class="small" id="sheet-status-${key}">${sheet.kind === 'reference' ? '기준표 · 현재 Excel 파일' : '확인 전'}</span></div>`).join('')}<h3 class="settings-subheading">바인컬처 제출 링크</h3><p class="small">기준표의 제출링크 열에서 중복 주소를 제외했습니다. 원본 제출처는 이 화면에서 수정하지 않습니다.</p>${Object.entries(draft.submissionLinks).map(([key, url]) => `<div class="settings-submission"><strong>${esc(submissionNames[key])}</strong><label>제출 URL<input type="url" data-submission-url="${key}" value="${esc(url)}"></label><a class="settings-sheet-link" data-submission-link="${key}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a></div>`).join('')}</div>
       <div class="settings-card"><h2>시즌 ${esc(season)} 배점</h2><p class="small">쉼표로 표시된 순위별 배점은 순서대로 입력합니다.</p><div class="settings-grid">${Object.entries(draft.scores).map(([key, value]) => `<label>${esc(scoreNames[key] || key)}<input data-score="${key}" inputmode="numeric" value="${esc(Array.isArray(value) ? value.join(', ') : value)}"></label>`).join('')}</div></div>
-      <div class="settings-save"><span id="settings-message" role="status" class="small">변경사항이 없습니다.</span><button id="save-settings" type="button" disabled>변경사항 저장</button></div></section>`;
+      <div class="settings-save"><span id="settings-message" role="status" class="small">변경사항이 없습니다.</span><button id="save-settings" type="button" disabled>변경사항 저장</button><button id="share-settings" type="button">GitHub에 공유 저장</button></div></section>`;
   }
   function readDraft() {
     const next = clone(config);
@@ -236,6 +236,19 @@
       if (error) { document.querySelector('#settings-message').textContent = error; return; }
       try { localStorage.setItem(storageKey, JSON.stringify(draft)); location.hash = 'dashboard'; location.reload(); }
       catch { document.querySelector('#settings-message').textContent = '브라우저 저장에 실패했습니다.'; }
+    });
+    document.querySelector('#share-settings').addEventListener('click', async event => {
+      draft = readDraft(); const error = validate(draft);
+      const message = document.querySelector('#settings-message');
+      if (error) { message.textContent = error; return; }
+      event.target.disabled = true;
+      message.textContent = 'GitHub에 저장 중…';
+      try {
+        await vinePublishShared({ season, settings: draft });
+        localStorage.setItem(storageKey, JSON.stringify(draft));
+        message.textContent = '물류팀 설정을 GitHub에 공유 저장했습니다.';
+        setTimeout(() => location.reload(), 900);
+      } catch (error) { message.textContent = error.message; event.target.disabled = false; }
     });
     document.querySelectorAll('[data-check-sheet]').forEach(button => button.addEventListener('click', async () => {
       const key = button.dataset.checkSheet, sheet = readDraft().sheets[key], status = document.querySelector('#sheet-status-' + key);

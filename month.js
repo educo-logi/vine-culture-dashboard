@@ -78,6 +78,22 @@
       return snapshot;
     };
     saveButton.addEventListener('click', saveMonth);
+    const shareButton = document.createElement('button');
+    shareButton.type = 'button';
+    shareButton.className = 'month-save';
+    shareButton.textContent = 'GitHub에 공유 저장';
+    saveButton.after(shareButton);
+    shareButton.addEventListener('click', async () => {
+      const snapshot = saveMonth();
+      shareButton.disabled = true;
+      note.textContent = 'GitHub에 저장 중…';
+      try {
+        await vinePublishShared({ season: vineConfig.season, settings: vineConfig, month: vineMonth, snapshot });
+        note.textContent = `${vineMonthLabel(vineMonth)} GitHub 공유 저장 완료 · 다른 사람에게도 표시됩니다.`;
+      } catch (error) {
+        note.textContent = `${error.message} · 이 브라우저에는 저장되었습니다.`;
+      } finally { shareButton.disabled = false; }
+    });
     selector.addEventListener('change', () => {
       const next = selector.value;
       if (vineMonth === initial && next !== initial && !vineMonthIsClosed(initial)) {

@@ -18,7 +18,7 @@
       const nextButton = document.createElement('button');
       nextButton.type = 'button';
       nextButton.className = 'month-next';
-      nextButton.textContent = '10월 저장하고 11월 시작';
+      nextButton.textContent = '11월로 이동';
       selector.parentElement.appendChild(nextButton);
       nextButton.addEventListener('click', () => { selector.value = '2026-11'; selector.dispatchEvent(new Event('change')); });
     }
@@ -40,7 +40,7 @@
         if (value !== undefined) document.getElementById(id).textContent = value;
       if (snapshot.scores?.total !== undefined && typeof updateHeroProgress === 'function') updateHeroProgress(snapshot.scores.total);
       note.textContent = `마지막 저장 ${snapshot.savedAt} · 수정 후 저장 가능`;
-    } else note.textContent = `${vineMonthLabel(vineMonth)} 입력 중 · 이 브라우저에 자동 저장`;
+    } else note.textContent = `${vineMonthLabel(vineMonth)} 입력 중 · 저장하면 GitHub에 공유`;
     if (vineMonth !== initial) {
       document.querySelector('#study .category-cards').hidden = true;
       document.querySelector('#policy .category-cards').hidden = true;
@@ -59,46 +59,46 @@
     const saveButton = document.createElement('button');
     saveButton.type = 'button';
     saveButton.className = 'month-save';
-    saveButton.textContent = '변경사항 저장';
+    saveButton.textContent = '변경사항 저장 · GitHub';
     selector.parentElement.appendChild(saveButton);
     const collectScores = () => ({ required: document.querySelector('#required-score').textContent, additional: document.querySelector('#known-score').textContent, total: document.querySelector('#total-score').textContent });
     const isDirty = () => !savedSnapshot || JSON.stringify(collectInputs()) !== JSON.stringify(savedSnapshot.inputs || {}) || JSON.stringify(collectScores()) !== JSON.stringify(savedSnapshot.scores || {});
     const updateSave = () => { saveButton.disabled = !isDirty(); };
-    controls.forEach(control => { control.addEventListener('change', updateSave); control.addEventListener('input', updateSave); });
+    let manualDirty = false;
+    controls.forEach(control => {
+      control.addEventListener('change', event => { if (event.isTrusted) manualDirty = true; updateSave(); });
+      control.addEventListener('input', event => { if (event.isTrusted) manualDirty = true; updateSave(); });
+    });
     document.addEventListener('vine-sheets-updated', updateSave);
-    document.querySelectorAll('#dashboard-page .field-reset').forEach(button => button.addEventListener('click', updateSave));
+    document.querySelectorAll('#dashboard-page .field-reset').forEach(button => button.addEventListener('click', () => { manualDirty = true; updateSave(); }));
     updateSave();
-    const saveMonth = () => {
+    const createSnapshot = () => {
       if (typeof updateAttendance === 'function') updateAttendance(false);
-      const snapshot = { inputs: collectInputs(), scores: collectScores(), savedAt: new Date().toLocaleString('ko-KR'), sources: Object.fromEntries(Object.entries(vineConfig.sheets).map(([key, sheet]) => [key, { url: sheet.url, gid: sheet.gid }])), scoring: JSON.parse(JSON.stringify(vineConfig.scores)), departments: JSON.parse(JSON.stringify(vineConfig.departments)) };
+      return { inputs: collectInputs(), scores: collectScores(), savedAt: new Date().toLocaleString('ko-KR'), sources: Object.fromEntries(Object.entries(vineConfig.sheets).map(([key, sheet]) => [key, { url: sheet.url, gid: sheet.gid }])), scoring: JSON.parse(JSON.stringify(vineConfig.scores)), departments: JSON.parse(JSON.stringify(vineConfig.departments)) };
+    };
+    const saveMonth = snapshot => {
       localStorage.setItem(snapshotKey, JSON.stringify(snapshot));
       savedSnapshot = snapshot;
+      manualDirty = false;
       note.textContent = `마지막 저장 ${snapshot.savedAt} · 수정 후 저장 가능`;
       saveButton.disabled = true;
-      return snapshot;
     };
-    saveButton.addEventListener('click', saveMonth);
-    const shareButton = document.createElement('button');
-    shareButton.type = 'button';
-    shareButton.className = 'month-save';
-    shareButton.textContent = 'GitHub에 공유 저장';
-    saveButton.after(shareButton);
-    shareButton.addEventListener('click', async () => {
-      const snapshot = saveMonth();
-      shareButton.disabled = true;
+    saveButton.addEventListener('click', async () => {
+      const snapshot = createSnapshot();
+      saveButton.disabled = true;
       note.textContent = 'GitHub에 저장 중…';
       try {
         await vinePublishShared({ season: vineConfig.season, settings: vineConfig, month: vineMonth, snapshot });
+        saveMonth(snapshot);
         note.textContent = `${vineMonthLabel(vineMonth)} GitHub 공유 저장 완료 · 다른 사람에게도 표시됩니다.`;
       } catch (error) {
-        note.textContent = `${error.message} · 이 브라우저에는 저장되었습니다.`;
-      } finally { shareButton.disabled = false; }
+        note.textContent = `${error.message} · 실적은 GitHub에 저장되지 않았습니다.`;
+        updateSave();
+      }
     });
     selector.addEventListener('change', () => {
       const next = selector.value;
-      if (vineMonth === initial && next !== initial && !vineMonthIsClosed(initial)) {
-        saveMonth();
-      } else if (isDirty() && !confirm(`${vineMonthLabel(vineMonth)}의 저장하지 않은 변경사항을 버리고 이동할까요?`)) {
+      if (manualDirty && !confirm(`${vineMonthLabel(vineMonth)}의 저장하지 않은 변경사항을 버리고 이동할까요?`)) {
         selector.value = vineMonth;
         return;
       }

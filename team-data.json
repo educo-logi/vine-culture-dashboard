@@ -2,6 +2,11 @@
   "schemaVersion": 1,
   "team": "물류팀",
   "activeSeason": "04",
-  "seasons": {},
+  "seasons": {
+    "04": {
+      "activeMonth": "2026-11",
+      "months": {}
+    }
+  },
   "updatedAt": null
 }

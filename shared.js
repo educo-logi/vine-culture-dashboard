@@ -1,6 +1,7 @@
 (function () {
   const api = 'https://api.github.com/repos/educo-logi/vine-culture-dashboard/contents/team-data.json';
   const revisionKey = 'vine-shared-revision';
+  const reloadKey = 'vine-shared-reload';
   const tokenKey = 'vine-github-token';
   const decode = content => new TextDecoder().decode(Uint8Array.from(atob(content.replace(/\s/g, '')), char => char.charCodeAt(0)));
   const encode = content => {
@@ -20,7 +21,15 @@
     return { sha: file.sha, data: JSON.parse(decode(file.content)) };
   }
   window.vineSharedReady = read().then(({ sha, data }) => {
-    if (data.team !== '물류팀' || localStorage.getItem(revisionKey) === sha) return;
+    if (data.team !== '물류팀') return;
+    if (sessionStorage.getItem(reloadKey) === sha) {
+      sessionStorage.removeItem(reloadKey);
+      return;
+    }
+    for (const key of Object.keys(localStorage)) {
+      if (/^vine-(month-snapshot-|active-month-|attendance|risk|policy-|consulting-|academy|supply-|improvement|reading-|tft|customer|social|idea-|teamculture|workshop|saving-award)/.test(key))
+        localStorage.removeItem(key);
+    }
     for (const [season, record] of Object.entries(data.seasons || {})) {
       if (record.settings?.team === '물류팀')
         localStorage.setItem(`vine-settings-season-${season}`, JSON.stringify(record.settings));
@@ -31,6 +40,7 @@
     const current = data.seasons?.[data.activeSeason];
     if (current?.activeMonth) localStorage.setItem(`vine-active-month-${data.activeSeason}`, current.activeMonth);
     localStorage.setItem(revisionKey, sha);
+    sessionStorage.setItem(reloadKey, sha);
     location.reload();
   }).catch(error => { console.warn(error.message); });
 
@@ -46,7 +56,7 @@
     if (data.team !== '물류팀') throw Error('GitHub 공유 데이터의 부서가 물류팀이 아닙니다.');
     data.seasons ||= {};
     const record = data.seasons[season] ||= { months: {} };
-    record.settings = settings;
+    if (!month && settings) record.settings = settings;
     record.months ||= {};
     if (month && snapshot) { record.months[month] = snapshot; record.activeMonth = month; }
     data.activeSeason = season;

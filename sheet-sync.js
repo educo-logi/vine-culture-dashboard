@@ -15,7 +15,14 @@
     document.dispatchEvent(new Event('vine-sheets-updated'));
   };
   const valid = value => String(value || '').trim();
-  const matchMonth = value => valid(value).replace(/[^0-9]/g, '').startsWith(monthDigits);
+  const matchMonth = value => {
+    const date = valid(value);
+    const digits = date.replace(/[^0-9]/g, '');
+    const shortMonth = month.slice(2).replace('-', '');
+    const monthOnly = String(Number(month.slice(5)));
+    return digits.startsWith(monthDigits) || digits.startsWith(shortMonth) ||
+      new RegExp(`^${monthOnly}(?:[.\\-/월]|$)`).test(date);
+  };
   const canonical = name => vineConfig.aliases[valid(name)] || valid(name);
   async function rowsFor(key) {
     const response = await fetch(vineSheetUrl(key, month), { cache: 'no-store' });

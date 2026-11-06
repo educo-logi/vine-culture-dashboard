@@ -86,7 +86,7 @@
   window.vineSheetPageUrl = (key, month = window.vineMonth || '2026-10') => {
     const sheet = config.sheets[key], id = sheetId(sheet.url);
     if (!id) return '';
-    const knownNovember = { improvement: '400706647', reading: '257746296' };
+    const knownNovember = { improvement: '400706647', reading: '257746296', education: '2147322710' };
     const gid = month === '2026-10' ? sheet.gid : month === '2026-11' && id === sheetId(defaults.sheets[key].url) ? knownNovember[key] : '';
     return `https://docs.google.com/spreadsheets/d/${id}/edit${gid ? `?gid=${gid}#gid=${gid}` : ''}`;
   };

@@ -40,7 +40,7 @@
         if (value !== undefined) document.getElementById(id).textContent = value;
       if (snapshot.scores?.total !== undefined && typeof updateHeroProgress === 'function') updateHeroProgress(snapshot.scores.total);
       note.textContent = `마지막 저장 ${snapshot.savedAt} · 수정 후 저장 가능`;
-    } else note.textContent = `${vineMonthLabel(vineMonth)} 입력 중 · 저장하면 GitHub에 공유`;
+    } else note.textContent = `${vineMonthLabel(vineMonth)} 입력 중 · 저장하면 팀과 공유`;
     if (vineMonth !== initial) {
       document.querySelector('#study .category-cards').hidden = true;
       document.querySelector('#policy .category-cards').hidden = true;
@@ -59,7 +59,7 @@
     const saveButton = document.createElement('button');
     saveButton.type = 'button';
     saveButton.className = 'month-save';
-    saveButton.textContent = '변경사항 저장 · GitHub';
+    saveButton.textContent = '변경사항 저장';
     selector.parentElement.appendChild(saveButton);
     const collectScores = () => ({ required: document.querySelector('#required-score').textContent, additional: document.querySelector('#known-score').textContent, total: document.querySelector('#total-score').textContent });
     const isDirty = () => !savedSnapshot || JSON.stringify(collectInputs()) !== JSON.stringify(savedSnapshot.inputs || {}) || JSON.stringify(collectScores()) !== JSON.stringify(savedSnapshot.scores || {});
@@ -86,13 +86,13 @@
     saveButton.addEventListener('click', async () => {
       const snapshot = createSnapshot();
       saveButton.disabled = true;
-      note.textContent = 'GitHub에 저장 중…';
+      note.textContent = '변경사항 저장 중…';
       try {
         await vinePublishShared({ season: vineConfig.season, settings: vineConfig, month: vineMonth, snapshot });
         saveMonth(snapshot);
-        note.textContent = `${vineMonthLabel(vineMonth)} GitHub 공유 저장 완료 · 다른 사람에게도 표시됩니다.`;
+        note.textContent = `${vineMonthLabel(vineMonth)} 저장 완료 · 팀원에게도 표시됩니다.`;
       } catch (error) {
-        note.textContent = `${error.message} · 실적은 GitHub에 저장되지 않았습니다.`;
+        note.textContent = `${error.message} · 실적은 공유 저장되지 않았습니다.`;
         updateSave();
       }
     });

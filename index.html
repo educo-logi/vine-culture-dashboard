@@ -284,4 +284,4 @@ const savingAwardSelect=document.querySelector('#saving-award-rank'),savingAward
 try{const saved=localStorage.getItem(savingAwardKey);if(['50','30'].includes(saved))savingAwardSelect.value=saved;}catch{}
 savingAwardSelect.addEventListener('change',()=>{try{localStorage.setItem(savingAwardKey,savingAwardSelect.value);}catch{}updateAttendance(false);refreshInputBackgrounds();});
 updateAttendance(false);refreshInputBackgrounds();
-</script><script src="sheet-sync.js?v=20261106"></script><script>initVineSettings();initVineMonth();syncVineSheets();</script></html>
+</script><script src="sheet-sync.js?v=20261106b"></script><script>initVineSettings();initVineMonth();syncVineSheets();</script></html>

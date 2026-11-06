@@ -108,7 +108,8 @@
     }
   }
   window.syncVineSheets = function () {
-    if (vineMonthIsClosed(month) || team !== '물류팀') return;
-    reading(); improvement(); education();
+    if (team !== '물류팀') return;
+    if (!vineMonthIsClosed(month)) { reading(); improvement(); }
+    education();
   };
 })();

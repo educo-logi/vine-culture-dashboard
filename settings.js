@@ -132,12 +132,12 @@
   let initial = JSON.stringify(draft);
   const memberCache = clone(config.membersByTeam);
   function settingsMarkup() {
-    return `<section id="settings-page" hidden><div class="settings-head"><span class="small">SEASON ${esc(season)} · 물류팀 설정</span><h1>설정</h1><p class="small">변경사항 저장은 이 브라우저에, 팀 공유 저장은 팀 공통 화면에 적용됩니다.</p><label>설정 시즌<select id="settings-season">${[...new Set(["04", season, ...Object.keys(localStorage).filter(key => key.startsWith("vine-settings-season-")).map(key => key.slice(-2))])].sort().map(value => `<option value="${esc(value)}" ${value === season ? "selected" : ""}>시즌 ${esc(value)}</option>`).join("")}</select></label><button id="create-next-season" type="button">다음 시즌 설정 만들기</button></div>
+    return `<section id="settings-page" hidden><div class="settings-head"><span class="small">SEASON ${esc(season)} · 물류팀 설정</span><h1>설정</h1><p class="small">팀원·부서·배점·시트 연결 설정은 이 브라우저에 저장됩니다. 월별 실적은 팀과 공유됩니다.</p><label>설정 시즌<select id="settings-season">${[...new Set(["04", season, ...Object.keys(localStorage).filter(key => key.startsWith("vine-settings-season-")).map(key => key.slice(-2))])].sort().map(value => `<option value="${esc(value)}" ${value === season ? "selected" : ""}>시즌 ${esc(value)}</option>`).join("")}</select></label><button id="create-next-season" type="button">다음 시즌 설정 만들기</button></div>
       <div class="settings-card"><h2>팀과 팀원</h2><label>우리 부서<select id="settings-team">${Object.keys(draft.departments).map(name => `<option value="${esc(name)}" ${name === draft.team ? 'selected' : ''}>${esc(name)}</option>`).join('')}</select></label><div class="settings-grid settings-team-fields" id="settings-members">${draft.members.map((name, index) => `<label>팀원 ${index + 1}<input data-member="${index}" value="${esc(name)}" maxlength="30"></label>`).join('')}</div></div>
       <div class="settings-card"><h2>부서별 인원</h2><p class="small">팀 평균 학습시간과 순위 계산에 사용합니다.</p><div class="settings-grid">${Object.entries(draft.departments).map(([name, count]) => `<label>${esc(name)}<input type="number" min="1" max="999" data-department="${esc(name)}" value="${count}"></label>`).join('')}</div></div>
       <div class="settings-card"><h2>구글시트 연결</h2><p class="small">원본 시트는 읽기 전용입니다. 링크와 gid를 저장한 뒤 연결 상태를 확인할 수 있습니다.</p>${Object.entries(draft.sheets).map(([key, sheet]) => `<div class="settings-sheet"><strong>${esc(sheet.label)}</strong><label>구글시트 URL<input type="url" data-sheet-url="${key}" value="${esc(sheet.url)}"></label><label>탭 gid<input data-sheet-gid="${key}" value="${esc(sheet.gid)}"></label><button type="button" data-check-sheet="${key}">읽기 확인</button><a class="settings-sheet-link" data-sheet-link="${key}" href="${esc(sheetPageFrom(sheet.url, sheet.gid))}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a><span class="small" id="sheet-status-${key}">${sheet.kind === 'reference' ? '기준표 · 현재 Excel 파일' : '확인 전'}</span></div>`).join('')}<h3 class="settings-subheading">바인컬처 제출 링크</h3><p class="small">기준표의 제출링크 열에서 중복 주소를 제외했습니다. 원본 제출처는 이 화면에서 수정하지 않습니다.</p>${Object.entries(draft.submissionLinks).map(([key, url]) => `<div class="settings-submission"><strong>${esc(submissionNames[key])}</strong><label>제출 URL<input type="url" data-submission-url="${key}" value="${esc(url)}"></label><a class="settings-sheet-link" data-submission-link="${key}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a></div>`).join('')}</div>
       <div class="settings-card"><h2>시즌 ${esc(season)} 배점</h2><p class="small">쉼표로 표시된 순위별 배점은 순서대로 입력합니다.</p><div class="settings-grid">${Object.entries(draft.scores).map(([key, value]) => `<label>${esc(scoreNames[key] || key)}<input data-score="${key}" inputmode="numeric" value="${esc(Array.isArray(value) ? value.join(', ') : value)}"></label>`).join('')}</div></div>
-      <div class="settings-save"><span id="settings-message" role="status" class="small">변경사항이 없습니다.</span><button id="save-settings" type="button" disabled>변경사항 저장</button><button id="share-settings" type="button">팀 공유 저장</button></div></section>`;
+      <div class="settings-save"><span id="settings-message" role="status" class="small">변경사항이 없습니다.</span><button id="save-settings" type="button" disabled>변경사항 저장</button></div></section>`;
   }
   function readDraft() {
     const next = clone(config);
@@ -236,19 +236,6 @@
       if (error) { document.querySelector('#settings-message').textContent = error; return; }
       try { localStorage.setItem(storageKey, JSON.stringify(draft)); location.hash = 'dashboard'; location.reload(); }
       catch { document.querySelector('#settings-message').textContent = '브라우저 저장에 실패했습니다.'; }
-    });
-    document.querySelector('#share-settings').addEventListener('click', async event => {
-      draft = readDraft(); const error = validate(draft);
-      const message = document.querySelector('#settings-message');
-      if (error) { message.textContent = error; return; }
-      event.target.disabled = true;
-      message.textContent = '팀 공유 저장 중…';
-      try {
-        await vinePublishShared({ season, settings: draft });
-        localStorage.setItem(storageKey, JSON.stringify(draft));
-        message.textContent = '물류팀 설정을 팀과 공유했습니다.';
-        setTimeout(() => location.reload(), 900);
-      } catch (error) { message.textContent = error.message; event.target.disabled = false; }
     });
     document.querySelectorAll('[data-check-sheet]').forEach(button => button.addEventListener('click', async () => {
       const key = button.dataset.checkSheet, sheet = readDraft().sheets[key], status = document.querySelector('#sheet-status-' + key);

@@ -14,6 +14,9 @@
     const note = document.createElement('span');
     note.className = 'small month-state';
     selector.parentElement.appendChild(note);
+    document.addEventListener('vine-shared-error', () => {
+      note.textContent = '공유 실적을 불러오지 못했습니다. 연결 상태를 확인한 뒤 새로고침하세요.';
+    });
     if (vineMonth === initial && !vineMonthIsClosed(initial)) {
       const nextButton = document.createElement('button');
       nextButton.type = 'button';
@@ -41,6 +44,7 @@
       if (snapshot.scores?.total !== undefined && typeof updateHeroProgress === 'function') updateHeroProgress(snapshot.scores.total);
       note.textContent = `마지막 저장 ${snapshot.savedAt} · 수정 후 저장 가능`;
     } else note.textContent = `${vineMonthLabel(vineMonth)} 입력 중 · 저장하면 팀과 공유`;
+    if (window.vineSharedError) note.textContent = '공유 실적을 불러오지 못했습니다. 연결 상태를 확인한 뒤 새로고침하세요.';
     if (vineMonth !== initial) {
       document.querySelector('#study .category-cards').hidden = true;
       document.querySelector('#policy .category-cards').hidden = true;
@@ -62,7 +66,8 @@
     saveButton.textContent = '변경사항 저장';
     selector.parentElement.appendChild(saveButton);
     const collectScores = () => ({ required: document.querySelector('#required-score').textContent, additional: document.querySelector('#known-score').textContent, total: document.querySelector('#total-score').textContent });
-    const isDirty = () => !savedSnapshot || JSON.stringify(collectInputs()) !== JSON.stringify(savedSnapshot.inputs || {}) || JSON.stringify(collectScores()) !== JSON.stringify(savedSnapshot.scores || {});
+    const manualInputs = inputs => Object.fromEntries(Object.entries(inputs).filter(([id]) => id !== 'improvement-count' && !id.startsWith('reading-')));
+    const isDirty = () => !savedSnapshot || JSON.stringify(manualInputs(collectInputs())) !== JSON.stringify(manualInputs(savedSnapshot.inputs || {}));
     const updateSave = () => { saveButton.disabled = !isDirty(); };
     let manualDirty = false;
     controls.forEach(control => {
@@ -88,8 +93,8 @@
       saveButton.disabled = true;
       note.textContent = '변경사항 저장 중…';
       try {
-        await vinePublishShared({ season: vineConfig.season, settings: vineConfig, month: vineMonth, snapshot });
-        saveMonth(snapshot);
+        const result = await vinePublishShared({ season: vineConfig.season, month: vineMonth, snapshot });
+        saveMonth({ ...snapshot, savedAt: result.savedAt || snapshot.savedAt });
         note.textContent = `${vineMonthLabel(vineMonth)} 저장 완료 · 팀원에게도 표시됩니다.`;
       } catch (error) {
         note.textContent = `${error.message} · 실적은 공유 저장되지 않았습니다.`;

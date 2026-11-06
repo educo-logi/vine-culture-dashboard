@@ -109,7 +109,7 @@
   }
   window.syncVineSheets = function () {
     if (team !== '물류팀') return;
-    if (!vineMonthIsClosed(month)) { reading(); improvement(); }
+    reading(); improvement();
     education();
   };
 })();

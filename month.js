@@ -62,7 +62,7 @@
     saveButton.textContent = '변경사항 저장';
     selector.parentElement.appendChild(saveButton);
     const collectScores = () => ({ required: document.querySelector('#required-score').textContent, additional: document.querySelector('#known-score').textContent, total: document.querySelector('#total-score').textContent });
-    const manualInputs = inputs => Object.fromEntries(Object.entries(inputs).filter(([id]) => id !== 'improvement-count' && !id.startsWith('reading-')));
+    const manualInputs = inputs => Object.fromEntries(controls.filter(control => control.id !== 'improvement-count' && !control.id.startsWith('reading-')).map(control => [control.id, inputs[control.id] ?? '']));
     const isDirty = () => !savedSnapshot || JSON.stringify(manualInputs(collectInputs())) !== JSON.stringify(manualInputs(savedSnapshot.inputs || {}));
     const updateSave = () => { saveButton.disabled = !isDirty(); };
     let manualDirty = false;

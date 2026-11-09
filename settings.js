@@ -97,7 +97,7 @@
     riskOnTime: '리스크 기한내', riskLate: '리스크 기한외', supplyDepartment: '보급 부서 1·2·3위', supplyPersonal: '보급 개인 1·2·3위',
     educationRanks: '교육보고서 순위 구간', academyPerCourse: '아카데미 수료당', academyCap: '아카데미 월 상한',
     readingPerReview: '독서리뷰 1건당', readingCap: '독서경영 월 상한', teamEducation: '경영개선팀 교육',
-    mentoringRanks: '바인멘토링(구.직컨) 순위 구간', oneDayPerEvent: '원데이 팀일정 1회', oneDayCap: '원데이 팀일정 상한',
+    mentoringRanks: '바인멘토링(구. 직컨) 순위 구간', oneDayPerEvent: '원데이 팀일정 1회', oneDayCap: '원데이 팀일정 상한',
     workshop: '1박 2일 워크샵 1회', teamCultureCap: '팀문화 합산 상한', tft: 'TFT 제출', customer: '고객관리 제출',
     socialParticipation: '사회공헌 참여', socialTop: '사회공헌 최다 참여율 포함', ideaPerItem: 'CEO아이디어 1건당',
     ideaCap: 'CEO아이디어 상한', savingAwardRanks: '경비절감 시상 1·2위', project100: '100프로젝트',

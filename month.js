@@ -32,10 +32,6 @@
         const control = document.getElementById(id);
         if (control) control.value = value;
       }
-      for (const id of ['lee', 'song', 'cho']) {
-        const lower = document.getElementById(`consulting-${id}`), upper = document.getElementById(`consulting-top-${id}`);
-        if (lower && upper) upper.value = lower.value;
-      }
       if (typeof updateConsulting === 'function') updateConsulting();
       if (typeof updateAttendance === 'function') updateAttendance(false);
       if (typeof refreshInputBackgrounds === 'function') refreshInputBackgrounds();

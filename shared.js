@@ -2,7 +2,7 @@
   const api = 'https://vine-logistics-state.lds1202.chatgpt.site/state';
   const revisionKey = 'vine-shared-revision';
   const reloadKey = 'vine-shared-reload';
-  const performanceKey = /^vine-(month-snapshot-|active-month-|attendance|risk|policy-|consulting-|academy|supply-|improvement|reading-|tft|customer|social|idea-|teamculture|workshop|saving-award)/;
+  const performanceKey = /^vine-(month-snapshot-|active-month-|attendance|risk|policy-|consulting-|mentoring-|academy|supply-|improvement|reading-|tft|customer|social|idea-|teamculture|workshop|saving-award)/;
 
   window.vineSharedReady = fetch(`${api}?t=${Date.now()}`, { cache: 'no-store' }).then(async response => {
     if (!response.ok) throw Error(`공유 실적 읽기 실패 (${response.status})`);

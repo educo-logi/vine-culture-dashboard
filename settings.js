@@ -97,7 +97,7 @@
     riskOnTime: '리스크 기한내', riskLate: '리스크 기한외', supplyDepartment: '보급 부서 1·2·3위', supplyPersonal: '보급 개인 1·2·3위',
     educationRanks: '교육보고서 순위 구간', academyPerCourse: '아카데미 수료당', academyCap: '아카데미 월 상한',
     readingPerReview: '독서리뷰 1건당', readingCap: '독서경영 월 상한', teamEducation: '경영개선팀 교육',
-    mentoringRanks: '직무컨설팅 순위 구간', oneDayPerEvent: '원데이 팀일정 1회', oneDayCap: '원데이 팀일정 상한',
+    mentoringRanks: '바인멘토링(구.직컨) 순위 구간', oneDayPerEvent: '원데이 팀일정 1회', oneDayCap: '원데이 팀일정 상한',
     workshop: '1박 2일 워크샵 1회', teamCultureCap: '팀문화 합산 상한', tft: 'TFT 제출', customer: '고객관리 제출',
     socialParticipation: '사회공헌 참여', socialTop: '사회공헌 최다 참여율 포함', ideaPerItem: 'CEO아이디어 1건당',
     ideaCap: 'CEO아이디어 상한', savingAwardRanks: '경비절감 시상 1·2위', project100: '100프로젝트',
@@ -126,7 +126,8 @@
     'workshop-count': '별도 제출 링크 등록. 1박 2일 워크샵 50점(월 1회) / 원데이 일정 5시간 이상 20점(월 2회)\n원데이 일정은 회당 5시간 이상이며 점심 회식은 제외',
     'idea-lee': '제출 1개당 5점 가산(월 최대 50점)',
     'saving-award-rank': '분기별 시상 부서 ABC그룹: 1위 50점 / 2위 30점',
-    'consulting-lee': '팀 평균 점수 상위 순위: 1~5등 100점 / 6~10등 80점 / 11~15등 60점 / 16~20등 40점 / 21~25등 20점 / 26등 이하 10점 / 미제출 0점'
+    'consulting-lee': '팀 평균 점수 상위 순위: 1~5등 100점 / 6~10등 80점 / 11~15등 60점 / 16~20등 40점 / 21~25등 20점 / 26등 이하 10점 / 미제출 0점',
+    'mentoring-rank': '팀 평균 점수 상위 순위: 1~5등 100점 / 6~10등 80점 / 11~15등 60점 / 16~20등 40점 / 21~25등 20점 / 26등 이하 10점 / 미제출 0점'
   };
   let draft = clone(config);
   let initial = JSON.stringify(draft);
@@ -269,7 +270,7 @@
     document.querySelector('.season b').textContent = `SEASON ${season}`;
     const suffixes = ['lee', 'song', 'cho'];
     for (let i = 0; i < 3; i++) {
-      for (const kind of ['reading', 'idea', 'consulting', 'consulting-top']) {
+      for (const kind of ['reading', 'idea', 'consulting']) {
         const label = document.querySelector(`label[for="${kind}-${suffixes[i]}"]`);
         if (label) label.textContent = config.members[i];
       }
@@ -350,7 +351,7 @@
   function applyScoreLabels() {
     const s = config.scores, byId = id => document.getElementById(id);
     const requiredMax = s.ceoFull+s.speakerFull+s.checkinOnTime*3+s.improvementTwoPlus+s.riskOnTime+s.educationRanks[0]+s.readingCap+s.tft+s.customer+s.oneDayCap;
-    const extraMax = 280+(s.academyCap-60)+(s.teamCultureCap-70)+(s.supplyDepartment[0]-50)+(s.supplyPersonal[0]-20)+(s.ideaCap-50)+(s.socialTop-30)+(s.teamEducation-60);
+    const extraMax = 280+s.mentoringRanks[0]+(s.academyCap-60)+(s.teamCultureCap-70)+(s.supplyDepartment[0]-50)+(s.supplyPersonal[0]-20)+(s.ideaCap-50)+(s.socialTop-30)+(s.teamEducation-60);
     window.vineTotalMax = requiredMax + extraMax;
     const required = byId('required-score').parentElement;
     required.lastChild.textContent = ` / ${requiredMax}점`;
@@ -366,7 +367,7 @@
       'improvement-count':s.improvementTwoPlus,'academy-count':s.academyCap,'supply-department':s.supplyDepartment[0]+s.supplyPersonal[0],
       'tft-status':s.tft+s.customer,'teamculture-count':s.oneDayCap,'workshop-count':s.workshop,
       'social-score-input':s.socialTop,'idea-lee':s.ideaCap,'reading-lee':s.readingCap,
-      'saving-award-rank':s.savingAwardRanks[0]
+      'saving-award-rank':s.savingAwardRanks[0], 'mentoring-rank':s.mentoringRanks[0]
     };
     for (const [id,max] of Object.entries(scores)) {
       const field = byId(id)?.closest('.input-field');

@@ -8,9 +8,29 @@
   window.initVineMonth = function () {
     const snapshotKey = `vine-month-snapshot-${vineConfig.season}-${vineMonth}`;
     const selector = document.querySelector('select[aria-label="조회 월"]');
-    const months = ['2026-10', '2026-11', ...Object.keys(localStorage).filter(key => key.startsWith(`vine-month-snapshot-${vineConfig.season}-`)).map(key => key.slice(-7))];
-    if (!months.includes(vineMonth)) months.push(vineMonth);
-    selector.innerHTML = [...new Set(months)].sort().map(month => `<option value="${month}" ${month === vineMonth ? 'selected' : ''}>${vineMonthLabel(month)}</option>`).join('');
+    const seasonMonths = vineConfig.season === '04'
+      ? Array.from({ length: 9 }, (_, offset) => new Date(Date.UTC(2026, 9 + offset, 1)).toISOString().slice(0, 7))
+      : [];
+    const savedMonths = Object.keys(localStorage)
+      .filter(key => key.startsWith(`vine-month-snapshot-${vineConfig.season}-`))
+      .map(key => key.slice(-7))
+      .filter(month => /^20\d\d-(0[1-9]|1[0-2])$/.test(month));
+    const months = [...new Set([...seasonMonths, ...savedMonths, vineMonth])].sort();
+    const savedTotal = month => {
+      try {
+        const snapshot = JSON.parse(localStorage.getItem(`vine-month-snapshot-${vineConfig.season}-${month}`) || 'null');
+        const total = snapshot?.scores?.total;
+        return total !== undefined && total !== null && String(total).trim() !== '' && Number.isFinite(Number(total))
+          ? Number(total) : null;
+      } catch { return null; }
+    };
+    const renderMonthOptions = () => {
+      selector.innerHTML = months.map(month => {
+        const total = savedTotal(month);
+        return `<option value="${month}" ${month === vineMonth ? 'selected' : ''}>${vineMonthLabel(month)}${total === null ? '' : ` ${total}점`}</option>`;
+      }).join('');
+    };
+    renderMonthOptions();
     const note = document.createElement('span');
     note.className = 'small month-state';
     selector.parentElement.appendChild(note);
@@ -79,6 +99,7 @@
     };
     const saveMonth = snapshot => {
       localStorage.setItem(snapshotKey, JSON.stringify(snapshot));
+      renderMonthOptions();
       savedSnapshot = snapshot;
       manualDirty = false;
       note.textContent = `마지막 저장 ${snapshot.savedAt} · 수정 후 저장 가능`;

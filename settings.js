@@ -124,7 +124,7 @@
     'task-status': 'inHR 제출물 3가지, 제출물당 기한 내 제출 20점 / 기한 외 제출(유예, 제외대상) 10점 / 미제출 0점',
     'performance-status': 'inHR 제출물 3가지, 제출물당 기한 내 제출 20점 / 기한 외 제출(유예, 제외대상) 10점 / 미제출 0점',
     'saving-status': 'inHR 제출물 3가지, 제출물당 기한 내 제출 20점 / 기한 외 제출(유예, 제외대상) 10점 / 미제출 0점',
-    'improvement-count': '개선사항 월별 참여인원수: 60% 이상 60점 / 30% 이상 40점 / 30% 이하 30점 / 미제출 0점\n작성방법: 개선 전 / 개선 내용 / 결과 또는 기대효과 작성',
+    'improvement-lee': '개선사항 월별 참여인원수: 60% 이상 60점 / 30% 이상 40점 / 30% 이하 30점 / 미제출 0점\n작성방법: 개선 전 / 개선 내용 / 결과 또는 기대효과 작성',
     'risk-status': '리스크 보고서 기한 내 제출 40점 / 기한 외(해당 월 내) 제출 30점 / 미제출 0점',
     'supply-department': '분기별 시상 부서(매출액 기준)\n부서 1위 50점 / 2위 40점 / 3위 30점\n개인 1위 20점 / 2위 15점 / 3위 10점(시상자의 소속부서에 부여)',
     'reading-lee': '리뷰 1개(권)당 5점 가산(월 최대 30점)',
@@ -283,14 +283,14 @@
     document.querySelector('.season b').textContent = `SEASON ${season}`;
     const suffixes = ['lee', 'song', 'cho'];
     for (let i = 0; i < 3; i++) {
-      for (const kind of ['reading', 'idea', 'consulting']) {
+      for (const kind of ['reading', 'idea', 'consulting', 'improvement']) {
         const label = document.querySelector(`label[for="${kind}-${suffixes[i]}"]`);
-        if (label) label.textContent = config.members[i];
+        if (label) label.textContent = kind === 'improvement' ? `팀원 ${i + 1} · ${config.members[i]}` : config.members[i];
       }
     }
     document.querySelectorAll('#dashboard-page .input-field').forEach(field => {
       const ids = [...field.querySelectorAll('select,input')].map(control => control.id);
-      const key = ids.includes('improvement-count') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : ids.includes('teamculture-count') ? 'oneDay' : 'criteria';
+      const key = ids.includes('improvement-lee') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : ids.includes('teamculture-count') ? 'oneDay' : 'criteria';
       const isPhilosophy = ids.includes('tft-status') && ids.includes('customer-status');
       const url = isPhilosophy ? config.submissionLinks.philosophy : vineSheetPageUrl(key);
       if (!url && key !== 'oneDay') return;
@@ -418,7 +418,7 @@
     const scores = {
       'ceo-attendees':s.ceoFull,'speaker-attendees':s.speakerFull,'task-status':s.checkinOnTime,
       'performance-status':s.checkinOnTime,'saving-status':s.checkinOnTime,'risk-status':s.riskOnTime,
-      'improvement-count':s.improvementTwoPlus,'academy-count':s.academyCap,'supply-department':s.supplyDepartment[0]+s.supplyPersonal[0],
+      'improvement-lee':s.improvementTwoPlus,'academy-count':s.academyCap,'supply-department':s.supplyDepartment[0]+s.supplyPersonal[0],
       'tft-status':s.tft+s.customer,'teamculture-count':s.oneDayCap,'workshop-count':s.workshop,
       'social-score-input':s.socialTop,'idea-lee':s.ideaCap,'reading-lee':s.readingCap,
       'saving-award-rank':s.savingAwardRanks[0], 'mentoring-rank':s.mentoringRanks[0]

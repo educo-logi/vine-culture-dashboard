@@ -8,7 +8,7 @@
       line = document.createElement('span');
       line.id = `source-${key}`;
       line.className = 'note sheet-source-status';
-      const anchor = key === 'education' ? document.querySelector('.education-card') : key === 'reading' ? document.querySelector('#reading-lee').closest('.input-field') : document.querySelector('#improvement-count').closest('.input-field');
+      const anchor = key === 'education' ? document.querySelector('.education-card') : key === 'reading' ? document.querySelector('#reading-lee').closest('.input-field') : document.querySelector('#improvement-lee').closest('.input-field');
       anchor.appendChild(line);
     }
     line.textContent = message;
@@ -56,9 +56,12 @@
         if (!person || !/^\d+$/.test(valid(row[0]))) continue;
         if ([2, 4, 6, 8].every(index => valid(row[index]) && !/^[/\.\s]*(개선전|개선후|결과)?\s*[:：]?\s*$/.test(valid(row[index])))) counts[person]++;
       }
+      ['lee', 'song', 'cho'].forEach((id, index) => {
+        const input = document.getElementById(`improvement-${id}`);
+        input.value = counts[vineConfig.members[index]] > 0 ? '1' : '0';
+        input.dispatchEvent(new Event('change'));
+      });
       const participants = Object.values(counts).filter(count => count > 0).length;
-      const input = document.getElementById('improvement-count');
-      input.value = String(Math.min(3, participants)); input.dispatchEvent(new Event('change'));
       document.getElementById('improvement-summary').textContent = `${participants}명 참여 · 작성 완료 ${Object.values(counts).reduce((a, b) => a + b, 0)}건`;
       sheetStatus('improvement', '참조시트 자동 로드 됨');
     } catch { sheetStatus('improvement', '참조 못함 · 개선 시트와 해당 월 탭을 확인하세요.'); }

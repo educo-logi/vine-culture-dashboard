@@ -293,19 +293,59 @@
       const key = ids.includes('improvement-count') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : ids.includes('teamculture-count') ? 'oneDay' : 'criteria';
       const isPhilosophy = ids.includes('tft-status') && ids.includes('customer-status');
       const url = isPhilosophy ? config.submissionLinks.philosophy : vineSheetPageUrl(key);
-      if (!url) return;
-      const link = document.createElement('a');
+      if (!url && key !== 'oneDay') return;
+      const link = document.createElement(key === 'oneDay' ? 'button' : 'a');
       link.className = 'sheet-shortcut';
-      link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
+      if (key === 'oneDay') {
+        link.type = 'button';
+        link.setAttribute('aria-haspopup', 'true');
+        link.setAttribute('aria-expanded', 'false');
+      } else {
+        link.href = url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+      }
       link.textContent = '↗';
-      link.title = isPhilosophy ? '필로소피 · TFT·고객관리 제출 링크 열기' : `${config.sheets[key].label} 시트 열기`;
+      link.title = key === 'oneDay' ? '원데이 팀일정 입력·제출 바로가기' : isPhilosophy ? '필로소피 · TFT·고객관리 제출 링크 열기' : `${config.sheets[key].label} 시트 열기`;
       link.setAttribute('aria-label', link.title);
       const notes = [...field.children].filter(element => element.classList?.contains('note'));
       const note = notes.at(-1);
       if (note) note.classList.add('has-sheet-shortcut');
       (note || field).appendChild(link);
+      if (key === 'oneDay') {
+        const menu = document.createElement('div');
+        menu.className = 'one-day-shortcut-menu';
+        menu.hidden = true;
+        const addOption = (label, destination) => {
+          const item = document.createElement(destination ? 'a' : 'span');
+          item.textContent = destination ? `${label} ↗` : `${label} · 참조 못함`;
+          if (destination) {
+            item.href = destination;
+            item.target = '_blank';
+            item.rel = 'noopener noreferrer';
+            item.addEventListener('click', () => closeMenu());
+          }
+          menu.appendChild(item);
+        };
+        const closeMenu = () => {
+          menu.hidden = true;
+          link.setAttribute('aria-expanded', 'false');
+          field.classList.remove('shortcut-menu-open');
+        };
+        addOption('입력', url);
+        addOption('제출', config.submissionLinks.teamCulture);
+        (note || field).appendChild(menu);
+        link.addEventListener('click', event => {
+          event.stopPropagation();
+          const opening = menu.hidden;
+          if (opening) document.querySelectorAll('.one-day-shortcut-menu').forEach(other => { other.hidden = true; });
+          menu.hidden = !opening;
+          link.setAttribute('aria-expanded', String(opening));
+          field.classList.toggle('shortcut-menu-open', opening);
+        });
+        document.addEventListener('click', event => { if (!field.contains(event.target)) closeMenu(); });
+        document.addEventListener('keydown', event => { if (event.key === 'Escape' && !menu.hidden) { closeMenu(); link.focus(); } });
+      }
       const criteriaKey = field.classList.contains('education-card') ? 'education-card' : ids.some(id => id.startsWith('consulting-')) ? 'consulting-lee' : ids.find(id => criteriaNotes[id]);
       if (!criteriaKey) return;
       const title = field.querySelector(':scope > label,:scope > b');

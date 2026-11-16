@@ -279,7 +279,8 @@
     document.querySelectorAll('#dashboard-page .input-field').forEach(field => {
       const ids = [...field.querySelectorAll('select,input')].map(control => control.id);
       const key = ids.includes('improvement-count') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : 'criteria';
-      const url = vineSheetPageUrl(key);
+      const isPhilosophy = ids.includes('tft-status') && ids.includes('customer-status');
+      const url = isPhilosophy ? config.submissionLinks.philosophy : vineSheetPageUrl(key);
       if (!url) return;
       const link = document.createElement('a');
       link.className = 'sheet-shortcut';
@@ -287,7 +288,7 @@
       link.target = '_blank';
       link.rel = 'noopener noreferrer';
       link.textContent = '↗';
-      link.title = `${config.sheets[key].label} 시트 열기`;
+      link.title = isPhilosophy ? '필로소피 · TFT·고객관리 제출 링크 열기' : `${config.sheets[key].label} 시트 열기`;
       link.setAttribute('aria-label', link.title);
       const notes = [...field.children].filter(element => element.classList?.contains('note'));
       const note = notes.at(-1);

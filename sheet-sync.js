@@ -116,7 +116,7 @@
   }
   window.syncVineSheets = function () {
     if (team !== '물류팀') return;
-    reading(); improvement();
+    reading();
     education();
   };
 })();

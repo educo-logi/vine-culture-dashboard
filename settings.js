@@ -191,6 +191,22 @@
     main.insertAdjacentHTML('beforeend', settingsMarkup());
     const nav = document.querySelector('aside nav');
     nav.insertAdjacentHTML('beforeend', '<a href="#settings" id="settings-link">⚙　설정</a>');
+    nav.insertAdjacentHTML('beforeend', '<div class="member-contribution"><strong>점수 공헌도 순위</strong><div id="member-contribution-list"></div><small>팀원별 개선·독서리뷰·CEO아이디어 기준</small></div>');
+    const renderContribution = () => {
+      const members = ['lee', 'song', 'cho'].map((id, index) => ({ id, name: config.members[index] })).filter(member => member.name);
+      const participants = members.filter(member => document.getElementById(`improvement-${member.id}`)?.value === '1').length;
+      const improvementPoints = participants === 1 ? config.scores.improvementOne : participants > 1 ? config.scores.improvementTwoPlus / participants : 0;
+      const ranks = members.map(member => ({
+        ...member,
+        score: (document.getElementById(`improvement-${member.id}`)?.value === '1' ? improvementPoints : 0)
+          + Math.min(2, Number(document.getElementById(`reading-${member.id}`)?.value || 0)) * config.scores.readingPerReview
+          + Number(document.getElementById(`idea-${member.id}`)?.value || 0) * config.scores.ideaPerItem
+      })).sort((a, b) => b.score - a.score || members.indexOf(a) - members.indexOf(b));
+      document.getElementById('member-contribution-list').innerHTML = ranks.map((member, index) => `<div><span>${index + 1}위 ${esc(member.name)}</span><b>${Number(member.score.toFixed(1))}점</b></div>`).join('');
+    };
+    document.querySelector('#dashboard-page').addEventListener('change', renderContribution);
+    document.addEventListener('vine-sheets-updated', renderContribution);
+    renderContribution();
     let displayedTeam = config.team;
     const memberFields = document.querySelector('#settings-members');
     const rememberMembers = () => { memberCache[displayedTeam] = [...memberFields.querySelectorAll('[data-member]')].map(input => input.value); };
@@ -285,18 +301,19 @@
     for (let i = 0; i < 3; i++) {
       for (const kind of ['reading', 'idea', 'consulting', 'improvement']) {
         const label = document.querySelector(`label[for="${kind}-${suffixes[i]}"]`);
-        if (label) label.textContent = kind === 'improvement' ? `팀원 ${i + 1} · ${config.members[i]}` : config.members[i];
+        if (label) label.textContent = config.members[i];
       }
     }
     document.querySelectorAll('#dashboard-page .input-field').forEach(field => {
       const ids = [...field.querySelectorAll('select,input')].map(control => control.id);
       const key = ids.includes('improvement-lee') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : ids.includes('teamculture-count') ? 'oneDay' : 'criteria';
+      const isImprovement = key === 'improvement';
       const isPhilosophy = ids.includes('tft-status') && ids.includes('customer-status');
       const url = isPhilosophy ? config.submissionLinks.philosophy : vineSheetPageUrl(key);
       if (!url && key !== 'oneDay') return;
-      const link = document.createElement(key === 'oneDay' ? 'button' : 'a');
+      const link = document.createElement(key === 'oneDay' || isImprovement ? 'button' : 'a');
       link.className = 'sheet-shortcut';
-      if (key === 'oneDay') {
+      if (key === 'oneDay' || isImprovement) {
         link.type = 'button';
         link.setAttribute('aria-haspopup', 'true');
         link.setAttribute('aria-expanded', 'false');
@@ -306,13 +323,13 @@
         link.rel = 'noopener noreferrer';
       }
       link.textContent = '↗';
-      link.title = key === 'oneDay' ? '원데이 팀일정 입력·제출 바로가기' : isPhilosophy ? '필로소피 · TFT·고객관리 제출 링크 열기' : `${config.sheets[key].label} 시트 열기`;
+      link.title = key === 'oneDay' ? '원데이 팀일정 입력·제출 바로가기' : isImprovement ? '개선 작성·제출 바로가기' : isPhilosophy ? '필로소피 · TFT·고객관리 제출 링크 열기' : `${config.sheets[key].label} 시트 열기`;
       link.setAttribute('aria-label', link.title);
       const notes = [...field.children].filter(element => element.classList?.contains('note'));
       const note = notes.at(-1);
       if (note) note.classList.add('has-sheet-shortcut');
       (note || field).appendChild(link);
-      if (key === 'oneDay') {
+      if (key === 'oneDay' || isImprovement) {
         const menu = document.createElement('div');
         menu.className = 'one-day-shortcut-menu';
         menu.hidden = true;
@@ -332,8 +349,8 @@
           link.setAttribute('aria-expanded', 'false');
           field.classList.remove('shortcut-menu-open');
         };
-        addOption('입력', url);
-        addOption('제출', config.submissionLinks.teamCulture);
+        addOption(isImprovement ? '작성' : '입력', url);
+        addOption('제출', isImprovement ? config.submissionLinks.inhr : config.submissionLinks.teamCulture);
         (note || field).appendChild(menu);
         link.addEventListener('click', event => {
           event.stopPropagation();

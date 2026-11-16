@@ -38,10 +38,10 @@
       const rows = await rowsFor('reading');
       if (!rows.some(row => valid(row[0]).endsWith('제출월') && valid(row[1]) === '부서' && valid(row[2]) === '성명')) throw Error('열 구조 불일치');
       const counts = Object.fromEntries(vineConfig.members.map(name => [name, 0]));
-      for (const row of rows) if (matchMonth(row[0]) && canonical(row[1]) === team && Object.hasOwn(counts, valid(row[2])) && valid(row[7]) && valid(row[8])) counts[valid(row[2])]++;
+      for (const row of rows) if (matchMonth(row[0]) && canonical(row[1]) === team && Object.hasOwn(counts, valid(row[2]))) counts[valid(row[2])]++;
       ['lee', 'song', 'cho'].forEach((id, index) => { const input = document.getElementById(`reading-${id}`); input.value = String(Math.min(2, counts[vineConfig.members[index]])); input.dispatchEvent(new Event('change')); });
       updateAttendance(false); refreshInputBackgrounds();
-      sheetStatus('reading', `${vineMonthLabel(month)} 시트 참조 · 리뷰 ${Object.values(counts).reduce((a, b) => a + b, 0)}건`);
+      sheetStatus('reading', '참조시트 자동 로드 됨');
     } catch (error) { sheetStatus('reading', `참조 못함 · 독서경영 ${vineMonthLabel(month)} 탭: ${error.message}`); }
   }
   async function improvement() {
@@ -60,7 +60,7 @@
       const input = document.getElementById('improvement-count');
       input.value = String(Math.min(3, participants)); input.dispatchEvent(new Event('change'));
       document.getElementById('improvement-summary').textContent = `${participants}명 참여 · 작성 완료 ${Object.values(counts).reduce((a, b) => a + b, 0)}건`;
-      sheetStatus('improvement', `${vineMonthLabel(month)} 시트 참조 · ${participants}명 참여`);
+      sheetStatus('improvement', '참조시트 자동 로드 됨');
     } catch { sheetStatus('improvement', '참조 못함 · 개선 시트와 해당 월 탭을 확인하세요.'); }
   }
   async function education() {
@@ -80,6 +80,7 @@
       const rank = 1 + ranked.filter(row => row.average > ours.average).length;
       const score = vineConfig.scores.educationRanks[Math.min(vineConfig.scores.educationRanks.length - 1, rank <= 5 ? 0 : rank <= 9 ? 1 : 2)];
       window.vineEducationScore = score;
+      window.vineEducationLoaded = true;
       const card = document.querySelector('.education-card');
       card.querySelector('.education-metrics').hidden = false;
       const metrics = card.querySelectorAll('.education-metrics b');
@@ -93,17 +94,18 @@
       document.querySelector('#learning').parentElement.hidden = false;
       document.querySelector('#learning').parentElement.querySelector(':scope > .card:nth-child(2)').hidden = true;
       document.querySelector('#ranking').innerHTML = ranked.slice(0, 6).map(row => { const place = 1 + ranked.filter(other => other.average > row.average).length; const points = vineConfig.scores.educationRanks[Math.min(vineConfig.scores.educationRanks.length - 1, place <= 5 ? 0 : place <= 9 ? 1 : 2)]; return `<tr class="${row.dept === team ? 'ours' : ''}"><td>${place}</td><td>${row.dept}</td><td>${row.average.toFixed(2)}</td><td>${points}점</td></tr>`; }).join('');
-      updateAttendance(false);
-      sheetStatus('education', `${vineMonthLabel(month)} 시트 참조 · ${rank}위`);
+      updateAttendance(false); refreshInputBackgrounds();
+      sheetStatus('education', '참조시트 자동 로드 됨');
     } catch (error) {
       window.vineEducationScore = 0;
+      window.vineEducationLoaded = false;
       const card = document.querySelector('.education-card');
       card.querySelector('.education-metrics').hidden = true;
       card.querySelector('.card-score').textContent = `— / ${vineConfig.scores.educationRanks[0]}점`;
       card.querySelector('.note').textContent = '참조 못함';
       document.querySelector('#study tbody tr').children[2].textContent = '참조 못함';
       document.querySelector('#study tbody tr').children[3].textContent = '—';
-      updateAttendance(false);
+      updateAttendance(false); refreshInputBackgrounds();
       sheetStatus('education', `참조 못함 · ${error.message || '교육보고서 시트와 해당 월 탭을 확인하세요.'}`);
     }
   }

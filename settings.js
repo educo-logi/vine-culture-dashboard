@@ -79,9 +79,10 @@
     const sheet = config.sheets[key];
     const id = sheetId(sheet.url);
     if (!id) return '';
-    if (month === '2026-10' || key === 'criteria') return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${sheet.gid}`;
+    const columns = key === 'reading' ? `&tq=${encodeURIComponent('select A,B,C')}` : '';
+    if (month === '2026-10' || key === 'criteria') return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${sheet.gid}${columns}`;
     const tab = key === 'education' ? `${Number(month.slice(5))}월` : `${month.slice(2, 4)}년 ${month.slice(5)}월`;
-    return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}`;
+    return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}${columns}`;
   };
   window.vineSheetPageUrl = (key, month = window.vineMonth || '2026-10') => {
     const sheet = config.sheets[key], id = sheetId(sheet.url);

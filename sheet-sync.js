@@ -69,11 +69,11 @@
       if (!rows.some(row => valid(row[0]) === '부서' && valid(row[1]) === '이름')) throw Error('열 구조 불일치');
       const totals = new Map();
       for (const row of rows) {
-        if (!matchMonth(row[3])) continue;
         const dept = canonical(row[0]), minutes = Number(valid(row[4]).replace(/,/g, ''));
         if (!dept || !Number.isFinite(minutes) || minutes <= 0) continue;
         totals.set(dept, (totals.get(dept) || 0) + minutes);
       }
+      const allMinutes = [...totals.values()].reduce((sum, minutes) => sum + minutes, 0);
       const ranked = [...totals].filter(([dept]) => vineConfig.departments[dept]).map(([dept, total]) => ({ dept, total, average: total / vineConfig.departments[dept] })).sort((a, b) => b.average - a.average);
       const ours = ranked.find(row => row.dept === team);
       if (!ours) throw Error('우리 팀 실적 없음');
@@ -88,6 +88,7 @@
       card.querySelectorAll('.education-metrics small')[2].textContent = `${ranked.length}개 부서 중 ${rank}위`;
       card.querySelector('.card-score').textContent = `${score} / ${vineConfig.scores.educationRanks[0]}점`;
       card.querySelector('.note').textContent = `팀 평균 학습시간 순위 기준 · 예상 ${score}점`;
+      card.querySelector('.education-total-note').textContent = `전체 ${totals.size}개 부서 · 총 학습시간 ${allMinutes.toLocaleString('ko-KR')}분`;
       const tableRow = document.querySelector('#study tbody tr');
       tableRow.children[2].textContent = `평균 ${Math.round(ours.average)}분 · ${rank}위`;
       tableRow.children[3].textContent = `${score}점`;
@@ -103,6 +104,7 @@
       card.querySelector('.education-metrics').hidden = true;
       card.querySelector('.card-score').textContent = `— / ${vineConfig.scores.educationRanks[0]}점`;
       card.querySelector('.note').textContent = '참조 못함';
+      card.querySelector('.education-total-note').textContent = '전체 부서 학습시간 · 참조 못함';
       document.querySelector('#study tbody tr').children[2].textContent = '참조 못함';
       document.querySelector('#study tbody tr').children[3].textContent = '—';
       updateAttendance(false); refreshInputBackgrounds();

@@ -26,7 +26,8 @@
       criteria: { label: '바인컬처 기준표', url: 'https://docs.google.com/spreadsheets/d/1Wak-uq-5EZvgm5PGadom6fk6Vhkuy4_D/edit?gid=1281628396', gid: '1281628396', kind: 'reference' },
       improvement: { label: '개선', url: 'https://docs.google.com/spreadsheets/d/148MZJOCyvTS5e7GBvcY24FT_UCMFXGxrt9SwNpG_id8/edit?gid=2090953107', gid: '2090953107', kind: 'live' },
       reading: { label: '독서경영', url: 'https://docs.google.com/spreadsheets/d/1CvLbTuk4xtV7wxjpwOPCW2T6KHE9YBrHQv7gnTN3DVg/edit?gid=2001056279', gid: '2001056279', kind: 'live' },
-      education: { label: '교육보고서', url: 'https://docs.google.com/spreadsheets/d/136fXrgs3ciPfIAdnBCM6jqApwvjB9BqimlxFg2iKKHw/edit?gid=1984001251', gid: '1984001251', kind: 'live' }
+      education: { label: '교육보고서', url: 'https://docs.google.com/spreadsheets/d/136fXrgs3ciPfIAdnBCM6jqApwvjB9BqimlxFg2iKKHw/edit?gid=1984001251', gid: '1984001251', kind: 'live' },
+      oneDay: { label: '원데이팀일정 작성', url: 'https://docs.google.com/spreadsheets/d/1ZQCIrqfxScmpQKfE20QwOZFNasPjMPuzkfxcqiH00Q0/edit?gid=1627804453#gid=1627804453', gid: '1627804453', kind: 'live' }
     },
     submissionLinks: {
       inhr: 'https://auth.inhrplus.com/auth/universal-login/login?serviceType=HRP&client=HRP&domain=vine&returnTo=/auth/universal-login-sessions/universal-login/done?returnTo%3D/auth/authorize?domain%253Dvine%2526serviceType%253DHRP%2526apprServiceType%253Dfalse%2526port%253D%2526pageUrl%253Dperformance-manage%25252Fboards%25252F%25253FcampaignId%25253D18%26serviceType%3DHRP%26domain%3Dvine',
@@ -75,19 +76,27 @@
     const id = sheetId(url);
     return id && /^\d+$/.test(String(gid)) ? `https://docs.google.com/spreadsheets/d/${id}/edit?gid=${gid}#gid=${gid}` : '';
   };
+  const oneDayGids = { '2026-07': '1178108286', '2026-08': '241827614', '2026-09': '746935287', '2026-10': '630039145', '2026-11': '1627804453' };
+  const oneDayPageFrom = (sheet, month) => {
+    const id = sheetId(sheet.url);
+    if (!id) return '';
+    const gid = id === sheetId(defaults.sheets.oneDay.url) ? oneDayGids[month] : month === window.vineMonth ? sheet.gid : '';
+    return gid ? sheetPageFrom(sheet.url, gid) : '';
+  };
   window.vineSheetUrl = (key, month = window.vineMonth || '2026-10') => {
     const sheet = config.sheets[key];
     const id = sheetId(sheet.url);
     if (!id) return '';
     const columns = key === 'reading' ? `&tq=${encodeURIComponent('select A,B,C')}` : '';
-    if (month === '2026-10' || key === 'criteria') return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${sheet.gid}${columns}`;
-    const tab = key === 'education' ? `${Number(month.slice(5))}월` : `${month.slice(2, 4)}년 ${month.slice(5)}월`;
+    if (key === 'criteria' || (month === '2026-10' && key !== 'oneDay')) return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&gid=${sheet.gid}${columns}`;
+    const tab = key === 'education' ? `${Number(month.slice(5))}월` : key === 'oneDay' ? `${month.slice(2, 4)} ${Number(month.slice(5))}월` : `${month.slice(2, 4)}년 ${month.slice(5)}월`;
     return `https://docs.google.com/spreadsheets/d/${id}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}${columns}`;
   };
   window.vineSheetPageUrl = (key, month = window.vineMonth || '2026-10') => {
     const sheet = config.sheets[key], id = sheetId(sheet.url);
     if (!id) return '';
     const knownNovember = { improvement: '400706647', reading: '257746296', education: '2147322710' };
+    if (key === 'oneDay') return oneDayPageFrom(sheet, month);
     const gid = month === '2026-10' ? sheet.gid : month === '2026-11' && id === sheetId(defaults.sheets[key].url) ? knownNovember[key] : '';
     return `https://docs.google.com/spreadsheets/d/${id}/edit${gid ? `?gid=${gid}#gid=${gid}` : ''}`;
   };
@@ -137,7 +146,7 @@
     return `<section id="settings-page" hidden><div class="settings-head"><span class="small">SEASON ${esc(season)} · 물류팀 설정</span><h1>설정</h1><p class="small">팀원·부서·배점·시트 연결 설정은 이 브라우저에 저장됩니다. 월별 실적은 팀과 공유됩니다.</p><label>설정 시즌<select id="settings-season">${[...new Set(["04", season, ...Object.keys(localStorage).filter(key => key.startsWith("vine-settings-season-")).map(key => key.slice(-2))])].sort().map(value => `<option value="${esc(value)}" ${value === season ? "selected" : ""}>시즌 ${esc(value)}</option>`).join("")}</select></label><button id="create-next-season" type="button">다음 시즌 설정 만들기</button></div>
       <div class="settings-card"><h2>팀과 팀원</h2><label>우리 부서<select id="settings-team">${Object.keys(draft.departments).map(name => `<option value="${esc(name)}" ${name === draft.team ? 'selected' : ''}>${esc(name)}</option>`).join('')}</select></label><div class="settings-grid settings-team-fields" id="settings-members">${draft.members.map((name, index) => `<label>팀원 ${index + 1}<input data-member="${index}" value="${esc(name)}" maxlength="30"></label>`).join('')}</div></div>
       <div class="settings-card"><h2>부서별 인원</h2><p class="small">팀 평균 학습시간과 순위 계산에 사용합니다.</p><div class="settings-grid">${Object.entries(draft.departments).map(([name, count]) => `<label>${esc(name)}<input type="number" min="1" max="999" data-department="${esc(name)}" value="${count}"></label>`).join('')}</div></div>
-      <div class="settings-card"><h2>구글시트 연결</h2><p class="small">원본 시트는 읽기 전용입니다. 링크와 gid를 저장한 뒤 연결 상태를 확인할 수 있습니다.</p>${Object.entries(draft.sheets).map(([key, sheet]) => `<div class="settings-sheet"><strong>${esc(sheet.label)}</strong><label>구글시트 URL<input type="url" data-sheet-url="${key}" value="${esc(sheet.url)}"></label><label>탭 gid<input data-sheet-gid="${key}" value="${esc(sheet.gid)}"></label><button type="button" data-check-sheet="${key}">읽기 확인</button><a class="settings-sheet-link" data-sheet-link="${key}" href="${esc(sheetPageFrom(sheet.url, sheet.gid))}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a><span class="small" id="sheet-status-${key}">${sheet.kind === 'reference' ? '기준표 · 현재 Excel 파일' : '확인 전'}</span></div>`).join('')}<h3 class="settings-subheading">바인컬처 제출 링크</h3><p class="small">기준표의 제출링크 열에서 중복 주소를 제외했습니다. 원본 제출처는 이 화면에서 수정하지 않습니다.</p>${Object.entries(draft.submissionLinks).map(([key, url]) => `<div class="settings-submission"><strong>${esc(submissionNames[key])}</strong><label>제출 URL<input type="url" data-submission-url="${key}" value="${esc(url)}"></label><a class="settings-sheet-link" data-submission-link="${key}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a></div>`).join('')}</div>
+      <div class="settings-card"><h2>구글시트 연결</h2><p class="small">원본 시트는 읽기 전용입니다. 링크와 gid를 저장한 뒤 연결 상태를 확인할 수 있습니다.</p>${Object.entries(draft.sheets).map(([key, sheet]) => `<div class="settings-sheet"><strong>${esc(sheet.label)}</strong><label>구글시트 URL<input type="url" data-sheet-url="${key}" value="${esc(sheet.url)}"></label><label>탭 gid<input data-sheet-gid="${key}" value="${esc(sheet.gid)}"></label><button type="button" data-check-sheet="${key}">읽기 확인</button><a class="settings-sheet-link" data-sheet-link="${key}" href="${esc(key === 'oneDay' ? oneDayPageFrom(sheet, window.vineMonth || '2026-10') : sheetPageFrom(sheet.url, sheet.gid))}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a><span class="small" id="sheet-status-${key}">${sheet.kind === 'reference' ? '기준표 · 현재 Excel 파일' : '확인 전'}</span></div>`).join('')}<h3 class="settings-subheading">바인컬처 제출 링크</h3><p class="small">기준표의 제출링크 열에서 중복 주소를 제외했습니다. 원본 제출처는 이 화면에서 수정하지 않습니다.</p>${Object.entries(draft.submissionLinks).map(([key, url]) => `<div class="settings-submission"><strong>${esc(submissionNames[key])}</strong><label>제출 URL<input type="url" data-submission-url="${key}" value="${esc(url)}"></label><a class="settings-sheet-link" data-submission-link="${key}" href="${esc(url)}" target="_blank" rel="noopener noreferrer">↗ 바로가기</a></div>`).join('')}</div>
       <div class="settings-card"><h2>시즌 ${esc(season)} 배점</h2><p class="small">쉼표로 표시된 순위별 배점은 순서대로 입력합니다.</p><div class="settings-grid">${Object.entries(draft.scores).map(([key, value]) => `<label>${esc(scoreNames[key] || key)}<input data-score="${key}" inputmode="numeric" value="${esc(Array.isArray(value) ? value.join(', ') : value)}"></label>`).join('')}</div></div>
       <div class="settings-save"><span id="settings-message" role="status" class="small">변경사항이 없습니다.</span><button id="save-settings" type="button" disabled>변경사항 저장</button></div></section>`;
   }
@@ -211,7 +220,7 @@
       const url = document.querySelector(`[data-sheet-url="${key}"]`).value.trim();
       const gid = document.querySelector(`[data-sheet-gid="${key}"]`).value.trim();
       const link = document.querySelector(`[data-sheet-link="${key}"]`);
-      const page = sheetPageFrom(url, gid);
+      const page = key === 'oneDay' ? oneDayPageFrom({ url, gid }, window.vineMonth || '2026-10') : sheetPageFrom(url, gid);
       if (page) { link.href = page; link.removeAttribute('aria-disabled'); }
       else { link.removeAttribute('href'); link.setAttribute('aria-disabled', 'true'); }
     }));
@@ -244,7 +253,10 @@
       if (key === 'criteria') { status.textContent = '기준표 XLSX · 이 화면에서는 직접 읽기 미지원'; return; }
       status.textContent = '읽는 중…';
       try {
-        const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId(sheet.url)}/gviz/tq?tqx=out:csv&gid=${sheet.gid}`, { cache: 'no-store' });
+        const month = window.vineMonth || '2026-10';
+        const tab = `${month.slice(2, 4)} ${Number(month.slice(5))}월`;
+        const source = key === 'oneDay' ? `https://docs.google.com/spreadsheets/d/${sheetId(sheet.url)}/gviz/tq?tqx=out:csv&sheet=${encodeURIComponent(tab)}` : `https://docs.google.com/spreadsheets/d/${sheetId(sheet.url)}/gviz/tq?tqx=out:csv&gid=${sheet.gid}`;
+        const response = await fetch(source, { cache: 'no-store' });
         if (!response.ok) throw Error(String(response.status));
         const body = await response.text();
         if (!body.trim()) throw Error('빈 응답');
@@ -278,7 +290,7 @@
     }
     document.querySelectorAll('#dashboard-page .input-field').forEach(field => {
       const ids = [...field.querySelectorAll('select,input')].map(control => control.id);
-      const key = ids.includes('improvement-count') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : 'criteria';
+      const key = ids.includes('improvement-count') ? 'improvement' : ids.some(id => id.startsWith('reading-')) ? 'reading' : field.classList.contains('education-card') ? 'education' : ids.includes('teamculture-count') ? 'oneDay' : 'criteria';
       const isPhilosophy = ids.includes('tft-status') && ids.includes('customer-status');
       const url = isPhilosophy ? config.submissionLinks.philosophy : vineSheetPageUrl(key);
       if (!url) return;

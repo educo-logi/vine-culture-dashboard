@@ -36,13 +36,13 @@
   async function reading() {
     try {
       const rows = await rowsFor('reading');
-      if (!rows.some(row => valid(row[0]) === '제출월' && valid(row[1]) === '부서')) throw Error('열 구조 불일치');
+      if (!rows.some(row => valid(row[0]).endsWith('제출월') && valid(row[1]) === '부서' && valid(row[2]) === '성명')) throw Error('열 구조 불일치');
       const counts = Object.fromEntries(vineConfig.members.map(name => [name, 0]));
       for (const row of rows) if (matchMonth(row[0]) && canonical(row[1]) === team && Object.hasOwn(counts, valid(row[2])) && valid(row[7]) && valid(row[8])) counts[valid(row[2])]++;
       ['lee', 'song', 'cho'].forEach((id, index) => { const input = document.getElementById(`reading-${id}`); input.value = String(Math.min(2, counts[vineConfig.members[index]])); input.dispatchEvent(new Event('change')); });
       updateAttendance(false); refreshInputBackgrounds();
       sheetStatus('reading', `${vineMonthLabel(month)} 시트 참조 · 리뷰 ${Object.values(counts).reduce((a, b) => a + b, 0)}건`);
-    } catch { sheetStatus('reading', '참조 못함 · 독서경영 시트와 해당 월 탭을 확인하세요.'); }
+    } catch (error) { sheetStatus('reading', `참조 못함 · 독서경영 ${vineMonthLabel(month)} 탭: ${error.message}`); }
   }
   async function improvement() {
     try {
